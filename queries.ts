@@ -12,6 +12,7 @@ export const reset = defineStatement({
     inputs: [],
     inputSchema: {},
     outputSchema: {},
+    mode: "run",
 });
 
 export const insertUser = defineStatement({
@@ -24,6 +25,7 @@ export const insertUser = defineStatement({
     outputSchema: {
         id: z.number().int(),
     },
+    mode: "get",
 });
 
 export const getUserById = defineStatement({
@@ -36,6 +38,7 @@ export const getUserById = defineStatement({
         name: z.string().nonempty(),
         age: z.number().int(),
     },
+    mode: "get",
 });
 
 export const getAllUsers = defineStatement({
