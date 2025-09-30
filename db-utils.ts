@@ -74,18 +74,22 @@ export function defineStatement<InputT extends z.ZodRawShape, OutputT extends z.
     };
 }
 
+type PreparedFunction<InputT extends z.ZodTypeAny, OutputT extends z.ZodTypeAny> =
+    z.infer<InputT> extends Record<string, never>
+        ? (input?: z.infer<InputT>) => z.infer<OutputT>
+        : (input: z.infer<InputT>) => z.infer<OutputT>;
+
 export function prepare<
     InputT extends z.ZodTypeAny,
     OutputT extends z.ZodTypeAny,
     Mode extends ExecutionMode = "all"
->(db: DatabaseSync, statement: Statement<InputT, OutputT, Mode>) {
+>(db: DatabaseSync, statement: Statement<InputT, OutputT, Mode>): PreparedFunction<InputT, OutputT> {
     try {
         const prepared = db.prepare(statement.sql);
-        return (
-            input: z.infer<InputT>,
-        ): z.infer<OutputT> => {
+        return ((input?: z.infer<InputT>): z.infer<OutputT> => {
             try {
-                const args = statement.inputs.map((key) => input[key as keyof typeof input]);
+                const actualInput = input ?? {};
+                const args = statement.inputs.map((key) => actualInput[key as keyof typeof actualInput]);
 
                 const res = statement.mode === "run"
                     ? prepared.run(...args)
@@ -101,7 +105,7 @@ export function prepare<
                     `Error: ${error instanceof Error ? error.message : String(error)}`
                 );
             }
-        };
+        }) as PreparedFunction<InputT, OutputT>;
     } catch (error) {
         throw new Error(
             `Failed to prepare statement: ${statement.sql}\n` +

@@ -4,7 +4,7 @@ import { prepare } from "./db-utils";
 import { getAllUsers, getUserById, insertUser, reset } from "./queries";
 
 const db = new DatabaseSync("db.sqlite");
-prepare(db, reset)({});
+prepare(db, reset)();
 const queries = {
     insertUser: prepare(db, insertUser),
     getUserById: prepare(db, getUserById),
@@ -18,7 +18,7 @@ const server = http.createServer(async (req, res) => {
         const { id } = queries.insertUser({ name, age: 99 });
         res.end(id.toString());
     } else {
-        const users = queries.getAllUsers({});
+        const users = queries.getAllUsers();
         res.end(JSON.stringify(users));
     }
 });
