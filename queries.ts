@@ -10,39 +10,39 @@ export const reset = defineStatement({
         );
     `,
     inputs: [],
-    inputSchema: z.object({}),
-    outputSchema: z.array(z.unknown()),
+    inputSchema: {},
+    outputSchema: {},
 });
 
 export const insertUser = defineStatement({
     sql: "INSERT INTO users (name, age) VALUES (?, ?) RETURNING id;",
     inputs: ["name", "age"],
-    inputSchema: z.object({
+    inputSchema: {
         name: z.string().nonempty().describe("user.name"),
         age: z.number().int(),
-    }),
-    outputSchema: z.array(z.object({
+    },
+    outputSchema: {
         id: z.number().int(),
-    })),
+    },
 });
 
 export const getUserById = defineStatement({
     sql: "SELECT name, age FROM users WHERE id = ?",
     inputs: ["id"],
-    inputSchema: z.object({
+    inputSchema: {
         id: z.number().int(),
-    }),
-    outputSchema: z.array(z.object({
+    },
+    outputSchema: {
         name: z.string().nonempty(),
         age: z.number().int(),
-    })),
+    },
 });
 
 export const getAllUsers = defineStatement({
     sql: "SELECT name FROM users",
     inputs: [],
-    inputSchema: z.object({}),
-    outputSchema: z.array(z.object({
+    inputSchema: {},
+    outputSchema: {
         name: z.string().nonempty(),
-    })),
+    },
 });

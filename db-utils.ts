@@ -10,10 +10,20 @@ type Statement<InputT extends z.ZodTypeAny, OutputT extends z.ZodTypeAny> = {
 };
 
 export function defineStatement<
-    InputT extends z.ZodTypeAny,
-    OutputT extends z.ZodTypeAny,
->(statement: Statement<InputT, OutputT>) {
-    return statement;
+    InputT extends z.ZodRawShape,
+    OutputT extends z.ZodRawShape,
+>(statement: {
+    sql: string;
+    inputs: (keyof InputT)[];
+    inputSchema: InputT;
+    outputSchema: OutputT;
+}) {
+    return {
+        sql: statement.sql,
+        inputs: statement.inputs,
+        inputSchema: z.object(statement.inputSchema),
+        outputSchema: z.array(z.object(statement.outputSchema)),
+    };
 }
 
 export function prepare<
