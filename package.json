@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node --no-warnings=ExperimentalWarning server.ts",
-    "gen": "node --no-warnings=ExperimentalWarning gen.ts test.sql"
+    "gen": "node --no-warnings=ExperimentalWarning gen.ts schema.sql"
   },
   "keywords": [],
   "author": "",
@@ -17,6 +17,7 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
-    "node-sql-parser": "^5.3.12"
+    "node-sql-parser": "^5.3.12",
+    "zod": "^4.1.11"
   }
 }
