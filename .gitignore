@@ -1,4 +1,8 @@
 node_modules/
 .idea/
 *.sqlite
+GEMINI.md
+CLAUDE.md
+AGENTS.md
+*.swp
 

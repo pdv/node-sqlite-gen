@@ -19,7 +19,7 @@ INSERT INTO users (name) VALUES (?)
 const select = db.prepare("SELECT * FROM users");
 
 const server = http.createServer(async (req, res) => {
-    const url = new URL(req.url, `http://${req.headers.host}`);
+    const url = new URL(req.url ?? "/", `http://${req.headers.host}`);
     if (req.method === "POST") {
         const name = url.searchParams.get("name");
         insert.run(name);
