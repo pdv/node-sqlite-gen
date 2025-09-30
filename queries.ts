@@ -9,9 +9,6 @@ export const reset = defineStatement({
             age INTEGER
         );
     `,
-    inputs: [],
-    inputSchema: {},
-    outputSchema: {},
     mode: "run",
 });
 
@@ -43,8 +40,6 @@ export const getUserById = defineStatement({
 
 export const getAllUsers = defineStatement({
     sql: "SELECT name FROM users",
-    inputs: [],
-    inputSchema: {},
     outputSchema: {
         name: z.string().nonempty(),
     },
