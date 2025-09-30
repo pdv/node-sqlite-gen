@@ -2,12 +2,12 @@ import sqlparser from "node-sql-parser";
 import * as fs from "node:fs";
 
 function toPascalCase(str: string): string {
-    return str.replace(/^\w|[A-Z]|\b\w/g, (word) => word.toUpperCase()).replace(/\s+/g, '');
+    return str.replace(/^\w|[A-Z]|\b\w/g, (word) => word.toUpperCase()).replace(/\s+/g, "");
 }
 
 async function generate(path: string): Promise<void> {
     const sql = fs.readFileSync(path, "utf8");
-    const queries = sql.split(';').filter(q => q.trim());
+    const queries = sql.split(";").filter((q) => q.trim());
     let output = "";
     for (const query of queries) {
         output += await generateQuery(query.trim());
@@ -25,12 +25,13 @@ async function generateQuery(query: string): Promise<string> {
         const name = match[1];
         const type = match[2];
         const queryAst = ast.ast;
-        if (type === 'one') {
+        if (type === "one") {
             return generateSelectOne(name, queryAst, query);
-        } else if (type === 'exec') {
+        } else if (type === "exec") {
             return generateInsert(name, queryAst, query);
         }
-    } else if (ast.ast.type === 'create') {
+        //@ts-ignore
+    } else if (ast.ast.type === "create") {
         return generateInterface(ast.ast);
     }
     return "";
@@ -40,23 +41,23 @@ function generateInterface(table: any): string {
     let result = "";
     const tableName = table.table[0].table;
     result += `export interface ${toPascalCase(tableName)} {
-`
+`;
     for (const definition of table.create_definitions) {
-        if (definition.resource === 'column') {
+        if (definition.resource === "column") {
             const columnName = definition.column.column;
             const dataType = definition.definition.dataType;
-            let tsType = 'any';
-            if (dataType === 'INT') {
-                tsType = 'number';
-            } else if (dataType === 'TEXT') {
-                tsType = 'string';
+            let tsType = "any";
+            if (dataType === "INT") {
+                tsType = "number";
+            } else if (dataType === "TEXT") {
+                tsType = "string";
             }
             result += `    ${columnName}: ${tsType};
-`
+`;
         }
     }
     result += `}
-`
+`;
     return result;
 }
 
@@ -64,27 +65,26 @@ function generateSelectOne(name: string, query: any, sql: string): string {
     const tableName = query.from[0].table;
     const returnType = toPascalCase(tableName);
     const numParams = (sql.match(/\?/g) || []).length;
-    const params = Array.from({length: numParams}, (_, i) => `p${i}: any`).join(', ');
+    const params = Array.from({ length: numParams }, (_, i) => `p${i}: any`).join(", ");
     let result = `export function ${name}(${params}): ${returnType} {
-`
+`;
     result += `    // TODO: implement
-`
+`;
     result += `}
-`
+`;
     return result;
 }
 
 function generateInsert(name: string, query: any, sql: string): string {
     const numParams = (sql.match(/\?/g) || []).length;
-    const params = Array.from({length: numParams}, (_, i) => `p${i}: any`).join(', ');
+    const params = Array.from({ length: numParams }, (_, i) => `p${i}: any`).join(", ");
     let result = `export function ${name}(${params}): void {
-`
+`;
     result += `    // TODO: implement
-`
+`;
     result += `}
-`
+`;
     return result;
 }
-
 
 await generate(process.argv[2]);

@@ -15,7 +15,7 @@ const server = http.createServer(async (req, res) => {
     const url = new URL(req.url ?? "/", `http://${req.headers.host}`);
     if (req.method === "POST") {
         const name = url.searchParams.get("name") ?? "<no name>";
-        const { id } = queries.insertUser({ foo: "bar", name, age: 99 })[0];
+        const { id } = queries.insertUser({ name, age: 99 })[0];
         res.end(id.toString());
     } else {
         const users = queries.getAllUsers({});
