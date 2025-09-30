@@ -15,63 +15,36 @@ type Statement<
     mode: Mode;
 };
 
-// Overload for mode: "run"
+type StatementDef<InputT extends z.ZodRawShape, OutputT extends z.ZodRawShape, Mode extends ExecutionMode> = {
+    sql: string;
+    inputs: (keyof InputT)[];
+    inputSchema: InputT;
+    outputSchema: Mode extends "run" ? {} : OutputT;
+    mode: Mode;
+};
+
 export function defineStatement<InputT extends z.ZodRawShape>(
-    statement: {
-        sql: string;
-        inputs: (keyof InputT)[];
-        inputSchema: InputT;
-        outputSchema: {};
-        mode: "run";
-    }
+    statement: StatementDef<InputT, {}, "run">
 ): Statement<z.ZodObject<InputT>, z.ZodObject<{}>, "run">;
 
-// Overload for mode: "get"
 export function defineStatement<InputT extends z.ZodRawShape, OutputT extends z.ZodRawShape>(
-    statement: {
-        sql: string;
-        inputs: (keyof InputT)[];
-        inputSchema: InputT;
-        outputSchema: OutputT;
-        mode: "get";
-    }
+    statement: StatementDef<InputT, OutputT, "get">
 ): Statement<z.ZodObject<InputT>, z.ZodObject<OutputT>, "get">;
 
-// Overload for mode: "all" or omitted
 export function defineStatement<InputT extends z.ZodRawShape, OutputT extends z.ZodRawShape>(
-    statement: {
-        sql: string;
-        inputs: (keyof InputT)[];
-        inputSchema: InputT;
-        outputSchema: OutputT;
-        mode?: "all";
-    }
+    statement: Omit<StatementDef<InputT, OutputT, "all">, "mode"> & { mode?: "all" }
 ): Statement<z.ZodObject<InputT>, z.ZodArray<z.ZodObject<OutputT>>, "all">;
 
-// Implementation
 export function defineStatement<InputT extends z.ZodRawShape, OutputT extends z.ZodRawShape>(
-    statement: {
-        sql: string;
-        inputs: (keyof InputT)[];
-        inputSchema: InputT;
-        outputSchema: OutputT;
-        mode?: ExecutionMode;
-    }
+    statement: Omit<StatementDef<InputT, OutputT, ExecutionMode>, "mode"> & { mode?: ExecutionMode }
 ) {
-    const mode = statement.mode || "all";
-    const outputSchema = mode === "run"
-        ? z.object({})
-        : mode === "get"
-        ? z.object(statement.outputSchema)
-        : z.array(z.object(statement.outputSchema));
+    const mode = statement.mode ?? "all";
+    const inputSchema = z.object(statement.inputSchema);
+    const outputSchema = mode === "run" ? z.object({})
+        : mode === "get" ? z.object(statement.outputSchema as OutputT)
+        : z.array(z.object(statement.outputSchema as OutputT));
 
-    return {
-        sql: statement.sql,
-        inputs: statement.inputs,
-        inputSchema: z.object(statement.inputSchema),
-        outputSchema,
-        mode,
-    };
+    return { sql: statement.sql, inputs: statement.inputs, inputSchema, outputSchema, mode };
 }
 
 type PreparedFunction<InputT extends z.ZodTypeAny, OutputT extends z.ZodTypeAny> =
@@ -84,32 +57,16 @@ export function prepare<
     OutputT extends z.ZodTypeAny,
     Mode extends ExecutionMode = "all"
 >(db: DatabaseSync, statement: Statement<InputT, OutputT, Mode>): PreparedFunction<InputT, OutputT> {
-    try {
-        const prepared = db.prepare(statement.sql);
-        return ((input?: z.infer<InputT>): z.infer<OutputT> => {
-            try {
-                const actualInput = input ?? {};
-                const args = statement.inputs.map((key) => actualInput[key as keyof typeof actualInput]);
+    const prepared = db.prepare(statement.sql);
 
-                const res = statement.mode === "run"
-                    ? prepared.run(...args)
-                    : statement.mode === "get"
-                    ? prepared.get(...args)
-                    : prepared.all(...args);
+    return ((input?: z.infer<InputT>): z.infer<OutputT> => {
+        const actualInput = input ?? {};
+        const args = statement.inputs.map((key) => actualInput[key as keyof typeof actualInput]);
 
-                return statement.outputSchema.parse(res);
-            } catch (error) {
-                throw new Error(
-                    `Failed to execute statement: ${statement.sql}\n` +
-                    `Input: ${JSON.stringify(input)}\n` +
-                    `Error: ${error instanceof Error ? error.message : String(error)}`
-                );
-            }
-        }) as PreparedFunction<InputT, OutputT>;
-    } catch (error) {
-        throw new Error(
-            `Failed to prepare statement: ${statement.sql}\n` +
-            `Error: ${error instanceof Error ? error.message : String(error)}`
-        );
-    }
+        const res = statement.mode === "run" ? prepared.run(...args)
+            : statement.mode === "get" ? prepared.get(...args)
+            : prepared.all(...args);
+
+        return statement.outputSchema.parse(res);
+    }) as PreparedFunction<InputT, OutputT>;
 }
