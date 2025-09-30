@@ -1,6 +1,7 @@
 import { z } from "zod";
+import { defineStatement } from "./db-utils";
 
-export const reset = {
+export const reset = defineStatement({
     sql: `
         CREATE TABLE users (
             id INTEGER PRIMARY KEY,
@@ -8,36 +9,40 @@ export const reset = {
             age INTEGER
         );
     `,
-    inputSchema: {},
-    outputSchema: {},
-};
+    inputs: [],
+    inputSchema: z.object({}),
+    outputSchema: z.array(z.unknown()),
+});
 
-export const insertUser = {
+export const insertUser = defineStatement({
     sql: "INSERT INTO users (name, age) VALUES (?, ?) RETURNING id;",
-    inputSchema: {
+    inputs: ["name", "age"],
+    inputSchema: z.object({
         name: z.string().nonempty().describe("user.name"),
-        age: z.int(),
-    },
-    outputSchema: {
+        age: z.number().int(),
+    }),
+    outputSchema: z.array(z.object({
         id: z.number().int(),
-    },
-};
+    })),
+});
 
-export const getUserById = {
+export const getUserById = defineStatement({
     sql: "SELECT name, age FROM users WHERE id = ?",
-    inputSchema: {
+    inputs: ["id"],
+    inputSchema: z.object({
         id: z.number().int(),
-    },
-    outputSchema: {
+    }),
+    outputSchema: z.array(z.object({
         name: z.string().nonempty(),
-        age: z.int(),
-    },
-};
+        age: z.number().int(),
+    })),
+});
 
-export const getAllUsers = {
+export const getAllUsers = defineStatement({
     sql: "SELECT name FROM users",
-    inputSchema: {},
-    outputSchema: {
+    inputs: [],
+    inputSchema: z.object({}),
+    outputSchema: z.array(z.object({
         name: z.string().nonempty(),
-    },
-};
+    })),
+});

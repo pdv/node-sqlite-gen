@@ -1,24 +1,33 @@
 import { z } from "zod";
 import { DatabaseSync } from "node:sqlite";
+import { type } from "node:os";
 
-type Statement = {
+type Statement<InputT extends z.ZodTypeAny, OutputT extends z.ZodTypeAny> = {
     sql: string;
-    inputSchema: Record<string, z.ZodNumber | z.ZodString>;
-    outputSchema: Record<string, z.ZodNumber | z.ZodString>;
+    inputs: InputT extends z.ZodObject<infer Shape> ? (keyof Shape)[] : string[];
+    inputSchema: InputT;
+    outputSchema: OutputT;
 };
 
-export function prepare<T extends Statement>(db: DatabaseSync, statement: T) {
+export function defineStatement<
+    InputT extends z.ZodTypeAny,
+    OutputT extends z.ZodTypeAny,
+>(statement: Statement<InputT, OutputT>) {
+    return statement;
+}
+
+export function prepare<
+    InputT extends z.ZodTypeAny,
+    OutputT extends z.ZodTypeAny,
+>(db: DatabaseSync, statement: Statement<InputT, OutputT>) {
     console.log(`preparing ${statement.sql}`);
     const prepared = db.prepare(statement.sql);
-    const inputSchema = z.object(statement.inputSchema);
-    const outputSchema = z.object(statement.outputSchema);
-    return (input: z.infer<typeof inputSchema>) => {
-        const args = [];
-        for (const [key, value] of Object.entries(statement.inputSchema)) {
-            args.push(value.parse(input[key as keyof typeof input]));
-        }
+    return (
+        input: z.infer<InputT>,
+    ): z.infer<OutputT> => {
+        const args = statement.inputs.map((key) => input[key as keyof typeof input]);
         console.log(`executing ${statement.sql}`);
         const res = prepared.all(...args);
-        return z.array(outputSchema).parse(res);
+        return statement.outputSchema.parse(res);
     };
 }
