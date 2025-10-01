@@ -2,32 +2,11 @@
 
 Generate type-safe TypeScript functions from annotated SQL queries using Node's built-in `node:sqlite` API.
 
-## Installation
-
-```bash
-npm install @pdv/sqlite-gen
-```
-
 ## Usage
 
 ```bash
-npx sqlite-gen queries.sql queries.gen.ts
+npx @pdv/node-sqlite-gen queries.sql queries.gen.ts
 ```
-
-## Annotation Format
-
-```sql
--- @name functionName
--- @count exec|one|many
--- @param paramName type
--- @returns columnName type
-SQL statement;
-```
-
-- `@name` - Function name to generate
-- `@count` - Query type: `exec` (no return), `one` (single row), `many` (array)
-- `@param` - Input parameter (name and type)
-- `@returns` - Output column (name and type)
 
 ## Examples
 
