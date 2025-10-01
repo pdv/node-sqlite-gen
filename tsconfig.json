@@ -4,14 +4,14 @@
     "lib": ["esnext"],
     "module": "esnext",
     "moduleResolution": "bundler",
-    "noEmit": true,
+    "outDir": "./dist",
+    "rootDir": "./",
     "isolatedModules": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "strict": true
   },
   "include": [
-    "server.ts",
-    "gen.ts"
+    "sqlite-gen.ts"
   ]
 }

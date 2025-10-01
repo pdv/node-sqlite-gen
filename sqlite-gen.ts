@@ -1,5 +1,5 @@
-import { readFileSync } from "fs";
-import { writeFileSync } from "node:fs";
+#!/usr/bin/env node
+import { readFileSync, writeFileSync } from "node:fs";
 
 interface Value {
     name: string;
@@ -79,4 +79,20 @@ function parse(inputPath: string, outputPath: string) {
     writeFileSync(outputPath, output.join("\n\n"));
 }
 
-parse("queries.sql", "queries.gen.ts");
+// CLI argument parsing
+const args = process.argv.slice(2);
+
+if (args.length !== 2) {
+    console.error("Usage: @pdv/sqlite-gen <input-file.sql> <output-file.ts>");
+    process.exit(1);
+}
+
+const [inputPath, outputPath] = args;
+
+try {
+    parse(inputPath, outputPath);
+    console.log(`Generated ${outputPath} from ${inputPath}`);
+} catch (error) {
+    console.error("Error:", error instanceof Error ? error.message : error);
+    process.exit(1);
+}

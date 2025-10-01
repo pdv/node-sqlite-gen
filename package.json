@@ -1,16 +1,22 @@
 {
-  "name": "sqlite-gen",
+  "name": "@pdv/sqlite-gen",
   "version": "1.0.0",
-  "main": "index.js",
   "type": "module",
-  "scripts": {
-    "gen": "npx tsx gen.ts",
-    "test": "npx tsx test.ts"
+  "bin": {
+    "sqlite-gen": "./dist/sqlite-gen.js"
   },
-  "keywords": [],
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "npx tsx test.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": ["sqlite", "sql", "codegen", "typescript", "type-safe"],
   "author": "pdv",
   "license": "ISC",
-  "description": "",
+  "description": "TypeScript code generator for type-safe SQLite queries using Node's built-in node:sqlite API",
   "devDependencies": {
     "@types/node": "^24.6.0",
     "prettier": "^3.6.2",
