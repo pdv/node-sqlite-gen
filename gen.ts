@@ -1,90 +1,82 @@
-import sqlparser from "node-sql-parser";
-import * as fs from "node:fs";
+import { readFileSync } from "fs";
+import { writeFileSync } from "node:fs";
 
-function toPascalCase(str: string): string {
-    return str.replace(/^\w|[A-Z]|\b\w/g, (word) => word.toUpperCase()).replace(/\s+/g, "");
+interface Value {
+    name: string;
+    type: "number" | "string";
 }
 
-async function generate(path: string): Promise<void> {
-    const sql = fs.readFileSync(path, "utf8");
-    const queries = sql.split(";").filter((q) => q.trim());
-    let output = "";
-    for (const query of queries) {
-        output += await generateQuery(query.trim());
+interface Statement {
+    name: string;
+    count: "exec" | "one" | "many";
+    params: Value[];
+    returns: Value[];
+    sql: string;
+}
+
+function parseStatement(statement: string): Statement {
+    const lines = statement.trim().split("\n");
+    const start = lines.findIndex((line) => !line.startsWith("-- @"));
+    const comments = lines.slice(0, start).map((line) => line.slice(4).split(" "));
+    const name = comments[0][1];
+    const count = comments[1][1];
+    const params = comments.slice(2).filter((comment) => comment[0] === "param");
+    const returns = comments.slice(2).filter((comment) => comment[0] === "returns");
+    const sql = lines.slice(start).join("\n");
+    return {
+        name,
+        count,
+        params: params.map((line) => ({ name: line[1], type: line[2] })),
+        returns: returns.map((line) => ({ name: line[1], type: line[2] })),
+        sql,
+    } as Statement;
+}
+
+function generateFunction(statement: Statement): string {
+    const params = statement.params.map((s) => `${s.name}: ${s.type}`).join(", ");
+    const paramsList = statement.params.map((s) => s.name).join(", ");
+    const { name, sql, count } = statement;
+
+    let returnType: string;
+    let methodCall: string;
+
+    if (count === "exec") {
+        returnType = "void";
+        methodCall = `stmt.run(${paramsList})`;
+    } else if (count === "one") {
+        const returnTypes = statement.returns.map((r) => `${r.name}: ${r.type}`).join("; ");
+        returnType = returnTypes ? `{ ${returnTypes} } | undefined` : "undefined";
+        methodCall = `stmt.get(${paramsList})`;
+    } else {
+        // many
+        const returnTypes = statement.returns.map((r) => `${r.name}: ${r.type}`).join("; ");
+        returnType = returnTypes ? `{ ${returnTypes} }[]` : "any[]";
+        methodCall = `stmt.all(${paramsList})`;
     }
-    fs.writeFileSync("db-bindings.ts", output);
+
+    const sqlConstant = `const ${name}_sql = \`${sql}\`;`;
+    const fnParams = params ? `, ${params}` : "";
+
+    const returnStatement =
+        count === "exec" ? methodCall + ";" : `return ${methodCall} as ${returnType};`;
+
+    return `
+${sqlConstant}
+
+export function ${name}(db: DatabaseSync${fnParams}) {
+    const stmt = db.prepare(${name}_sql);
+    ${returnStatement}
+}`.trim();
 }
 
-async function generateQuery(query: string): Promise<string> {
-    const annotationRegex = /-- name: (\w+) :(\w+)/;
-    const match = query.match(annotationRegex);
-    const parser = new sqlparser.Parser();
-    const ast = parser.parse(query);
-
-    if (match) {
-        const name = match[1];
-        const type = match[2];
-        const queryAst = ast.ast;
-        if (type === "one") {
-            return generateSelectOne(name, queryAst, query);
-        } else if (type === "exec") {
-            return generateInsert(name, queryAst, query);
-        }
-        //@ts-ignore
-    } else if (ast.ast.type === "create") {
-        return generateInterface(ast.ast);
+function parse(inputPath: string, outputPath: string) {
+    const sql = readFileSync(inputPath, "utf-8");
+    const output = ['import { DatabaseSync } from "node:sqlite";'];
+    for (const statement of sql.split(";").slice(0, -1)) {
+        const stmt = parseStatement(statement);
+        output.push(generateFunction(stmt));
     }
-    return "";
+    writeFileSync(outputPath, output.join("\n\n"));
 }
 
-function generateInterface(table: any): string {
-    let result = "";
-    const tableName = table.table[0].table;
-    result += `export interface ${toPascalCase(tableName)} {
-`;
-    for (const definition of table.create_definitions) {
-        if (definition.resource === "column") {
-            const columnName = definition.column.column;
-            const dataType = definition.definition.dataType;
-            let tsType = "any";
-            if (dataType === "INT") {
-                tsType = "number";
-            } else if (dataType === "TEXT") {
-                tsType = "string";
-            }
-            result += `    ${columnName}: ${tsType};
-`;
-        }
-    }
-    result += `}
-`;
-    return result;
-}
-
-function generateSelectOne(name: string, query: any, sql: string): string {
-    const tableName = query.from[0].table;
-    const returnType = toPascalCase(tableName);
-    const numParams = (sql.match(/\?/g) || []).length;
-    const params = Array.from({ length: numParams }, (_, i) => `p${i}: any`).join(", ");
-    let result = `export function ${name}(${params}): ${returnType} {
-`;
-    result += `    // TODO: implement
-`;
-    result += `}
-`;
-    return result;
-}
-
-function generateInsert(name: string, query: any, sql: string): string {
-    const numParams = (sql.match(/\?/g) || []).length;
-    const params = Array.from({ length: numParams }, (_, i) => `p${i}: any`).join(", ");
-    let result = `export function ${name}(${params}): void {
-`;
-    result += `    // TODO: implement
-`;
-    result += `}
-`;
-    return result;
-}
-
-await generate(process.argv[2]);
+parse("queries.sql", "queries.gen.ts");
