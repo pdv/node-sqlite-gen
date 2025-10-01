@@ -35,16 +35,38 @@ function parseStatement(statement: string): Statement {
 
 function generateFunction(statement: Statement): string {
     const params = statement.params.map((s) => `${s.name}: ${s.type}`).join(", ");
-    const { name, sql } = statement;
-    const returnTypes = statement.returns.map((r) => `        ${r.name}: ${r.type}`).join(",\n");
+    const paramsList = statement.params.map((s) => s.name).join(", ");
+    const { name, sql, count } = statement;
+
+    let returnType: string;
+    let methodCall: string;
+
+    if (count === "exec") {
+        returnType = "void";
+        methodCall = `stmt.run(${paramsList})`;
+    } else if (count === "one") {
+        const returnTypes = statement.returns.map((r) => `${r.name}: ${r.type}`).join("; ");
+        returnType = returnTypes ? `{ ${returnTypes} } | undefined` : "undefined";
+        methodCall = `stmt.get(${paramsList})`;
+    } else { // many
+        const returnTypes = statement.returns.map((r) => `${r.name}: ${r.type}`).join("; ");
+        returnType = returnTypes ? `{ ${returnTypes} }[]` : "any[]";
+        methodCall = `stmt.all(${paramsList})`;
+    }
+
+    const sqlConstant = `const ${name}_sql = \`${sql}\`;`;
+    const fnParams = params ? `, ${params}` : "";
+
+    const returnStatement = count === "exec"
+        ? methodCall + ";"
+        : `return ${methodCall} as ${returnType};`;
+
     return `
-export function ${name}(db: DatabaseSync, ${params}) {
-    const stmt = db.prepare(\`
-${sql}
-    \`);
-    return stmt.get() as {
-${returnTypes}
-    };
+${sqlConstant}
+
+export function ${name}(db: DatabaseSync${fnParams}) {
+    const stmt = db.prepare(${name}_sql);
+    ${returnStatement}
 }`.trim();
 }
 
