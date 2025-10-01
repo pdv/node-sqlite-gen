@@ -1,11 +1,20 @@
+-- @name createUsersTable
+-- @count exec
 CREATE TABLE IF NOT EXISTS users (
     id INT PRIMARY KEY,
     name TEXT NOT NULL
 );
 
--- name: GetUser :one
+-- @name getAllUsers
+-- @count many
+-- @returns name string
+-- @returns age number
 SELECT * FROM users;
 
--- name: CreateUser :exec
+-- @name insertUser
+-- @count one
+-- @param name string
+-- @returns id number
 INSERT INTO users (name)
-VALUES (?);
+VALUES (?)
+RETURNING (id);
