@@ -79,7 +79,6 @@ function parse(inputPath: string, outputPath: string) {
     writeFileSync(outputPath, output.join("\n\n"));
 }
 
-// CLI argument parsing
 const args = process.argv.slice(2);
 
 if (args.length !== 2) {

@@ -1,9 +1,9 @@
 {
-  "name": "@pdv/sqlite-gen",
-  "version": "1.0.0",
+  "name": "@pdv/node-sqlite-gen",
+  "version": "0.1.0",
   "type": "module",
   "bin": {
-    "sqlite-gen": "./dist/sqlite-gen.js"
+    "node-sqlite-gen": "./dist/node-sqlite-gen.js"
   },
   "files": [
     "dist"
