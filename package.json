@@ -1,6 +1,6 @@
 {
   "name": "@pdv/sqlite-gen",
-  "version": "0.1.0",
+  "version": "0.2.1",
   "type": "module",
   "bin": {
     "sqlite-gen": "dist/sqlite-gen.js"
@@ -10,9 +10,12 @@
   ],
   "scripts": {
     "build": "tsc",
-    "gen": "npx tsx sqlite-gen.ts tests/queries.sql tests/node/queries.gen.ts node",
-    "gen:d1": "npx tsx sqlite-gen.ts tests/queries.sql tests/d1/queries.gen.d1.ts d1",
-    "test": "npm run gen && npm run gen:d1 && wrangler types tests/d1/worker-configuration.d.ts && tsc --noEmit && npx tsx tests/node/node.test.ts && npx vitest run tests/d1/d1.test.ts",
+    "gen": "tsx sqlite-gen.ts tests/queries.sql tests/node/queries.gen.ts node",
+    "gen:d1": "tsx sqlite-gen.ts tests/queries.sql tests/d1/queries.gen.d1.ts d1",
+    "typecheck": "wrangler types tests/d1/worker-configuration.d.ts && tsc --noEmit",
+    "test:node": "tsx tests/node/node.test.ts",
+    "test:d1": "vitest run tests/d1/d1.test.ts",
+    "test": "npm run gen && npm run gen:d1 && npm run typecheck && npm run test:node && npm run test:d1",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
@@ -20,7 +23,9 @@
     "sql",
     "codegen",
     "typescript",
-    "type-safe"
+    "node",
+    "cloudflare",
+    "d1"
   ],
   "author": "pdv",
   "license": "ISC",
