@@ -33,13 +33,15 @@ function parseStatement(statement: string): Statement {
 }
 
 function generateFunction(statement: Statement): string {
-    const params = statement.params.map((s) => `${s.name}: ${s.type}`).join(", ");
-    const paramsList = statement.params.map((s) => s.name).join(", ");
     const { name, sql, count } = statement;
+    const hasParams = statement.params.length > 0;
+    const paramsType = hasParams
+        ? `{ ${statement.params.map((s) => `${s.name}: ${s.type}`).join("; ")} }`
+        : "";
+    const paramsList = statement.params.map((s) => s.name).join(", ");
 
     let returnType: string;
     let methodCall: string;
-
     if (count === "exec") {
         returnType = "void";
         methodCall = `stmt.run(${paramsList})`;
@@ -55,7 +57,10 @@ function generateFunction(statement: Statement): string {
     }
 
     const sqlConstant = `const ${name}_sql = \`${sql}\`;`;
-    const fnParams = params ? `, ${params}` : "";
+    const fnParams = hasParams ? `, params: ${paramsType}` : "";
+    const destructure = hasParams
+        ? `    const { ${paramsList} } = params;\n`
+        : "";
 
     const returnStatement =
         count === "exec" ? methodCall + ";" : `return ${methodCall} as ${returnType};`;
@@ -64,7 +69,7 @@ function generateFunction(statement: Statement): string {
 ${sqlConstant}
 
 export function ${name}(db: DatabaseSync${fnParams}) {
-    const stmt = db.prepare(${name}_sql);
+${destructure}    const stmt = db.prepare(${name}_sql);
     ${returnStatement}
 }`.trim();
 }

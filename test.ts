@@ -17,8 +17,8 @@ test("basic insert and select", () => {
     const db = new DatabaseSync(":memory:");
     createUsersTable(db);
 
-    const result1 = insertUser(db, "Alice");
-    const result2 = insertUser(db, "Bob");
+    const result1 = insertUser(db, { name: "Alice" });
+    const result2 = insertUser(db, { name: "Bob" });
 
     assert.ok(result1?.id);
     assert.ok(result2?.id);
@@ -31,14 +31,14 @@ test("get user by id", () => {
     const db = new DatabaseSync(":memory:");
     createUsersTable(db);
 
-    const inserted = insertUser(db, "Charlie");
+    const inserted = insertUser(db, { name: "Charlie" });
     assert.ok(inserted?.id);
 
-    const user = getUserById(db, inserted.id);
+    const user = getUserById(db, { id: inserted.id });
     assert.strictEqual(user?.name, "Charlie");
     assert.strictEqual(user?.id, inserted.id);
 
-    const notFound = getUserById(db, 9999);
+    const notFound = getUserById(db, { id: 9999 });
     assert.strictEqual(notFound, undefined);
 });
 
@@ -46,12 +46,12 @@ test("update user email", () => {
     const db = new DatabaseSync(":memory:");
     createUsersTable(db);
 
-    const inserted = insertUser(db, "Diana");
+    const inserted = insertUser(db, { name: "Diana" });
     assert.ok(inserted?.id);
 
-    updateUserEmail(db, "diana@example.com", inserted.id);
+    updateUserEmail(db, { email: "diana@example.com", id: inserted.id });
 
-    const user = getUserById(db, inserted.id);
+    const user = getUserById(db, { id: inserted.id });
     assert.strictEqual(user?.email, "diana@example.com");
 });
 
@@ -59,12 +59,12 @@ test("delete user", () => {
     const db = new DatabaseSync(":memory:");
     createUsersTable(db);
 
-    const inserted = insertUser(db, "Eve");
+    const inserted = insertUser(db, { name: "Eve" });
     assert.ok(inserted?.id);
 
-    deleteUser(db, inserted.id);
+    deleteUser(db, { id: inserted.id });
 
-    const user = getUserById(db, inserted.id);
+    const user = getUserById(db, { id: inserted.id });
     assert.strictEqual(user, undefined);
 });
 
@@ -72,11 +72,11 @@ test("filter users by min age", () => {
     const db = new DatabaseSync(":memory:");
     createUsersTable(db);
 
-    insertUserWithDetails(db, "Young", "young@example.com", 20);
-    insertUserWithDetails(db, "Middle", "middle@example.com", 35);
-    insertUserWithDetails(db, "Old", "old@example.com", 50);
+    insertUserWithDetails(db, { name: "Young", email: "young@example.com", age: 20 });
+    insertUserWithDetails(db, { name: "Middle", email: "middle@example.com", age: 35 });
+    insertUserWithDetails(db, { name: "Old", email: "old@example.com", age: 50 });
 
-    const users = getUsersByMinAge(db, 30);
+    const users = getUsersByMinAge(db, { minAge: 30 });
     assert.strictEqual(users.length, 2);
     assert.deepEqual(users.map(u => u.name).sort(), ["Middle", "Old"]);
 });
@@ -85,7 +85,7 @@ test("insert with multiple params and returns", () => {
     const db = new DatabaseSync(":memory:");
     createUsersTable(db);
 
-    const result = insertUserWithDetails(db, "Frank", "frank@example.com", 42);
+    const result = insertUserWithDetails(db, { name: "Frank", email: "frank@example.com", age: 42 });
 
     assert.ok(result?.id);
     assert.strictEqual(result?.name, "Frank");
@@ -99,9 +99,9 @@ test("count users", () => {
     const initial = countUsers(db);
     assert.strictEqual(initial?.count, 0);
 
-    insertUser(db, "User1");
-    insertUser(db, "User2");
-    insertUser(db, "User3");
+    insertUser(db, { name: "User1" });
+    insertUser(db, { name: "User2" });
+    insertUser(db, { name: "User3" });
 
     const final = countUsers(db);
     assert.strictEqual(final?.count, 3);
