@@ -10,7 +10,8 @@
   ],
   "scripts": {
     "build": "tsc",
-    "gen": "npx tsx node-sqlite-gen.ts queries.sql queries.gen.ts",
+    "gen": "npx tsx node-sqlite-gen.ts queries.sql queries.gen.ts node",
+    "gen:d1": "npx tsx node-sqlite-gen.ts queries.sql queries.gen.d1.ts d1",
     "test": "npx tsx test.ts",
     "prepublishOnly": "npm run build"
   },
