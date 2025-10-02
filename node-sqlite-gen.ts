@@ -57,20 +57,25 @@ function generateFunction(statement: Statement): string {
     }
 
     const sqlConstant = `const ${name}_sql = \`${sql}\`;`;
-    const fnParams = hasParams ? `, params: ${paramsType}` : "";
+    const fnParams = hasParams ? `params: ${paramsType}` : "";
     const destructure = hasParams
-        ? `    const { ${paramsList} } = params;\n`
+        ? `        const { ${paramsList} } = params;\n`
         : "";
 
     const returnStatement =
         count === "exec" ? methodCall + ";" : `return ${methodCall} as ${returnType};`;
 
+    const closureParams = hasParams ? `(${fnParams})` : "()";
+    const closureReturnType = returnType === "void" ? "void" : returnType;
+
     return `
 ${sqlConstant}
 
-export function ${name}(db: DatabaseSync${fnParams}) {
-${destructure}    const stmt = db.prepare(${name}_sql);
-    ${returnStatement}
+export function ${name}(db: DatabaseSync) {
+    const stmt = db.prepare(${name}_sql);
+    return ${closureParams} => {
+${destructure}        ${returnStatement}
+    };
 }`.trim();
 }
 
