@@ -1,11 +1,11 @@
-# node-sqlite-gen
+# sqlite-gen
 
-Generate type-safe TypeScript functions from annotated SQL queries using Node's built-in `node:sqlite` API.
+Generate type-safe TypeScript functions from annotated SQL for `node:sqlite` and Cloudflare D1.
 
 ## Usage
 
 ```bash
-npx @pdv/node-sqlite-gen queries.sql queries.gen.ts
+npx @pdv/sqlite-gen queries.sql queries.gen.ts [node|d1]
 ```
 
 ## Examples

@@ -194,7 +194,7 @@ function parse(inputPath: string, outputPath: string, backend: "node" | "d1") {
 const args = process.argv.slice(2);
 
 if (args.length < 2 || args.length > 3) {
-    console.error("Usage: node-sqlite-gen <input-file.sql> <output-file.ts> [node|d1]");
+    console.error("Usage: sqlite-gen <input-file.sql> <output-file.ts> [node|d1]");
     console.error("  Default backend: node");
     process.exit(1);
 }

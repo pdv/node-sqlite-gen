@@ -1,4 +1,4 @@
-name = "node-sqlite-gen-tests"
+name = "sqlite-gen-tests"
 compatibility_date = "2024-01-01"
 
 [[d1_databases]]

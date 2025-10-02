@@ -1,17 +1,17 @@
 {
-  "name": "@pdv/node-sqlite-gen",
+  "name": "@pdv/sqlite-gen",
   "version": "0.1.0",
   "type": "module",
   "bin": {
-    "node-sqlite-gen": "dist/node-sqlite-gen.js"
+    "sqlite-gen": "dist/sqlite-gen.js"
   },
   "files": [
     "dist"
   ],
   "scripts": {
     "build": "tsc",
-    "gen": "npx tsx node-sqlite-gen.ts tests/queries.sql tests/node/queries.gen.ts node",
-    "gen:d1": "npx tsx node-sqlite-gen.ts tests/queries.sql tests/d1/queries.gen.d1.ts d1",
+    "gen": "npx tsx sqlite-gen.ts tests/queries.sql tests/node/queries.gen.ts node",
+    "gen:d1": "npx tsx sqlite-gen.ts tests/queries.sql tests/d1/queries.gen.d1.ts d1",
     "test": "npm run gen && npm run gen:d1 && wrangler types tests/d1/worker-configuration.d.ts && tsc --noEmit && npx tsx tests/node/node.test.ts && npx vitest run tests/d1/d1.test.ts",
     "prepublishOnly": "npm run build"
   },
@@ -24,10 +24,10 @@
   ],
   "author": "pdv",
   "license": "ISC",
-  "description": "TypeScript code generator for type-safe SQLite queries using Node's built-in node:sqlite API",
+  "description": "Generate Typescript from SQL for node:sqlite or Cloudflare D1",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pdv/node-sqlite-gen.git"
+    "url": "git+https://github.com/pdv/sqlite-gen.git"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.9.8",
